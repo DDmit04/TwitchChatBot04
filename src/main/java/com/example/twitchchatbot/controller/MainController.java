@@ -20,7 +20,7 @@ public class MainController {
     @Value("${botDevChannels:bot}")
     private String botDevChannels;
 
-    @GetMapping
+    @GetMapping("/")
     public String mainPage(Model model) {
         boolean isDevMode = true;
         if(profile.equals("prod")) {
