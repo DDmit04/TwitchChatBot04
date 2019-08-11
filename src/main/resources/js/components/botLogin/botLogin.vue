@@ -1,0 +1,233 @@
+<template>
+    <div class="row justify-content-center">
+        <div class="col-4">
+            <b-card class="mt-4 shadow">
+                <b-card-text>
+                    <div class="form-group mt-2">
+                        <input class="form-control mb-2"
+                               v-model="username"
+                               id="botUsername"
+                               placeholder="bot username"
+                               name="username"
+                               v-validate="'required'"/>
+                        <span style="color: red">{{ errors.first('username') }}</span>
+                        <input class="form-control mb-2"
+                               v-model="oAuth"
+                               id="botOAuth"
+                               placeholder="bot oAuth"
+                               name="oAuth"
+                               type="password"
+                               v-validate="'required'"/>
+                        <span style="color: red">{{ errors.first('oAuth') }}</span>
+                        <div class="text-center mb-2">
+                            <a href="https://twitchapps.com/tmi/">where can I get it?</a>
+                        </div>
+                        <input class="form-control mb-2"
+                               v-model="channelsInput"
+                               id="channels"
+                               placeholder="channels"
+                               name="channels"
+                               v-validate="'required'"/>
+                        <span style="color: red">{{ errors.first('channels') }}</span>
+                        <span style="color: red">{{loadingState.error}}</span>
+                        <div class="text-center">
+                            <button class="btn btn-primary btn-block my-2"
+                                    :disabled="!canStartConnection || loadingState.disconnecting"
+                                    @click="loginControl">
+                                <div v-if="loadingState.connecting || loadingState.disconnecting">
+                                    <div v-if="loadingState.disconnecting">
+                                        disconnecting...
+                                    </div>
+                                    <div v-else>
+                                        connecting...
+                                    </div>
+                                    <b-spinner small></b-spinner>
+                                </div>
+                                <div v-else-if="bot == null
+                                        || loadingState.error != null
+                                        || joinedChannels.length == 0">
+                                    connect
+                                </div>
+                                <div v-else>
+                                    disconnect
+                                </div>
+                            </button>
+                        </div>
+                        <bot-login-connection-notify/>
+                    </div>
+                </b-card-text>
+            </b-card>
+        </div>
+    </div>
+</template>
+
+<script>
+    // import twitchApi from 'api/twitchApi'
+    import {mapState, mapMutations, mapActions} from 'vuex'
+    import botLoginConnectionNotify from 'components/botLogin/botLoginConnectionNotify.vue'
+
+    export default {
+        name: "botLogin",
+        data() {
+            return {
+                username: '',
+                oAuth: '',
+                channelsInput: '',
+                loadingState: {
+                    connecting: false,
+                    disconnecting: false,
+                    error: null
+                }
+            }
+        },
+        components: {
+            botLoginConnectionNotify
+        },
+        created() {
+            if(this.isDevMode) {
+                this.username = this.botDevUsername
+                this.oAuth = this.botDevOauth
+                this.channelsInput = this.botDevChannels
+            }
+            // let werds = ['lul', 'zulul']
+            // let str = "lul lulabs zululsbas zulul sba";
+            // let resExp = '/'
+            // werds.forEach(werd => resExp += werd + '|' )
+            // resExp += '#/g'
+            // resExp = resExp.replace('|#', '')
+            // resExp = resExp.replace('|', ' | ')
+            // alert(resExp)
+            // alert( str.match(/lul | zulu/g) )
+            // str = str.replace(/(<<)\w*(>>)/g, 'username')
+            // console.log(str)
+        },
+        computed: {
+            ...mapState(['bot', 'joinedChannels', 'failedJoinChannels', 'isDevMode', 'botDevUsername', 'botDevOauth', 'botDevChannels']),
+            ...mapState('botDev', ['isDevMode', 'botDevUsername', 'botDevOauth', 'botDevChannels']),
+            ...mapState('saveChannelsData', ['savedChannels']),
+            channels() {
+                let channelsArray = []
+                this.channelsInput.split(',').forEach(channel => {
+                    channelsArray.push(channel.trim())
+                })
+                return channelsArray
+            },
+            canStartConnection() {
+                let canStart = false
+                if(this.username != null
+                    && this.oAuth != null
+                    && this.channelsInput != null
+                    && !this.loadingState.connecting) {
+                    canStart = true
+                }
+                return canStart
+            }
+        },
+        methods: {
+            ...mapMutations(['createBotMutation', 'destroyBotMutation',
+                            'addJoinedChannelMutation', 'cleanJoinedChannelsMutation',
+                            'addFailedJoinedChannelMutation', 'cleanFailedJoinChannelsMutation']),
+            ...mapActions('saveChannelsData', ['pushNewChannelAction']),
+            createBot() {
+                let options = {
+                    options: {
+                        debug: true
+                    },
+                    connection: {
+                        cluster: 'aws',
+                        reconnect: true
+                    },
+                    identity: {
+                        username: this.username,
+                        password: this.oAuth
+                    },
+                }
+                this.createBotMutation(options)
+            },
+            loginControl() {
+                if(this.bot === null || this.loadingState.error != null || this.joinedChannels.length == 0) {
+                    this.loginBot()
+                } else {
+                    this.logoutBot()
+                }
+            },
+            async logoutBot() {
+                this.loadingState.disconnecting = true
+                this.loadingState.connecting = false
+                this.loadingState.error = null
+                await this.destroyBotMutation()
+                this.loadingState.disconnecting = false
+            },
+            async loginBot() {
+                if(this.bot != null && this.loadingState.error == null) {
+                    this.destroyBotMutation()
+                }
+                this.cleanFailedJoinChannelsMutation()
+                this.loadingState.error = null
+                this.loadingState.connecting = true
+                await this.createBot()
+                await this.setupBot()
+                await this.connectBot()
+                await setTimeout(() => {
+                    this.loadingState.connecting = false
+                }, this.channels.length * 500)
+                this.joinedChannels.forEach(joinedChannel => {
+                    let savedChannelSearch = this.savedChannels.find(savedChannel => savedChannel.channelName == joinedChannel)
+                    if(savedChannelSearch == null) {
+                        this.pushNewChannelAction(joinedChannel)
+                    }
+                })
+                // let response = await twitchApi.getViewers(this.channel)
+                // let data = await response.json()
+                // console.log(data.chatters)
+                // console.log(data.chatters.moderators)
+                // console.log(data.chatters.viewers)
+                // console.log(data.chatters.vips)
+            },
+            setupBot() {
+                this.bot.on('connected', this.onConnectedHandler)
+                this.bot.on("join", this.onJoinHandler)
+                this.bot.on("disconnected", this.onDisconnectedHandler)
+                this.bot.on("notice", this.onNoticeHandler)
+            },
+            async connectBot() {
+                await this.bot.connect().catch((err) => { this.loadingState.error = err })
+                for(let i = 0; i < this.channels.length; i++) {
+                    await this.joinChannel(this.channels[i])
+                }
+            },
+            async joinChannel(channel) {
+                await this.bot.join(channel).catch((err) => { this.onJoinErrorHandler(err, channel) })
+            },
+            onJoinErrorHandler(err, channel) {
+                let failedChannelSearch = this.failedJoinChannels.find(
+                    failedChannel => failedChannel.channel === channel
+                )
+                if(failedChannelSearch == null) {
+                    this.addFailedJoinedChannelMutation({
+                        channel: channel,
+                        error: err
+                    })
+                }
+            },
+            onJoinHandler(channel, username, self) {
+                if(self && this.joinedChannels.length < 5) {
+                    this.addJoinedChannelMutation(channel.replace('#', ''))
+                }
+            },
+            onNoticeHandler(channel, msgid, message) {
+                console.log('channel: ' + channel + ' msgid: ' + msgid + ' message: ' + message)
+            },
+            onConnectedHandler(address, port) {
+                console.log('Joined channel: ' + address + ' port: ' + port)
+            },
+            onDisconnectedHandler(reason) {
+                console.log('disconnected channel: ' + reason)
+            },
+        }
+    }
+</script>
+
+<style scoped>
+
+</style>
