@@ -5,14 +5,14 @@
                 <b-card-text>
                     <div class="form-group mt-2">
                         <input class="form-control mb-2"
-                               v-model="username"
+                               v-model="usernameInput"
                                id="botUsername"
                                placeholder="bot username"
                                name="username"
                                v-validate="'required'"/>
                         <span style="color: red">{{ errors.first('username') }}</span>
                         <input class="form-control mb-2"
-                               v-model="oAuth"
+                               v-model="oAuthInput"
                                id="botOAuth"
                                placeholder="bot oAuth"
                                name="oAuth"
@@ -70,9 +70,6 @@
         name: "botLogin",
         data() {
             return {
-                username: '',
-                oAuth: '',
-                channelsInput: '',
                 loadingState: {
                     connecting: false,
                     disconnecting: false,
@@ -85,8 +82,8 @@
         },
         created() {
             if(this.isDevMode) {
-                this.username = this.botDevUsername
-                this.oAuth = this.botDevOauth
+                this.usernameInput = this.botDevUsername
+                this.oAuthInput = this.botDevOauth
                 this.channelsInput = this.botDevChannels
             }
             // let werds = ['lul', 'zulul']
@@ -102,10 +99,23 @@
             // console.log(str)
         },
         computed: {
-            ...mapState(['bot', 'joinedChannels', 'failedJoinChannels', 'isDevMode', 'botDevUsername', 'botDevOauth', 'botDevChannels']),
+            ...mapState(['bot', 'joinedChannels', 'failedJoinChannels']),
             ...mapState('botDev', ['isDevMode', 'botDevUsername', 'botDevOauth', 'botDevChannels']),
+            ...mapState('botLogin', ['username', 'oAuth', 'channels']),
             ...mapState('saveChannelsData', ['savedChannels']),
-            channels() {
+            usernameInput: {
+                get() { return this.username },
+                set(newVal) { return this.updateUsernameMutation(newVal) }
+            },
+            oAuthInput: {
+                get() { return this.oAuth },
+                set(newVal) { return this.updateOAuthMutation(newVal) }
+            },
+            channelsInput: {
+                get() { return this.channels },
+                set(newVal) { return this.updateChannelsMutation(newVal) }
+            },
+            channelsArray() {
                 let channelsArray = []
                 this.channelsInput.split(',').forEach(channel => {
                     channelsArray.push(channel.trim())
@@ -114,8 +124,8 @@
             },
             canStartConnection() {
                 let canStart = false
-                if(this.username != null
-                    && this.oAuth != null
+                if(this.usernameInput != null
+                    && this.oAuthInput != null
                     && this.channelsInput != null
                     && !this.loadingState.connecting) {
                     canStart = true
@@ -124,9 +134,8 @@
             }
         },
         methods: {
-            ...mapMutations(['createBotMutation', 'destroyBotMutation',
-                            'addJoinedChannelMutation', 'cleanJoinedChannelsMutation',
-                            'addFailedJoinedChannelMutation', 'cleanFailedJoinChannelsMutation']),
+            ...mapMutations(['createBotMutation', 'destroyBotMutation','addJoinedChannelMutation', 'addFailedJoinedChannelMutation']),
+            ...mapMutations('botLogin', ['updateUsernameMutation', 'updateOAuthMutation', 'updateChannelsMutation']),
             ...mapActions('saveChannelsData', ['pushNewChannelAction']),
             createBot() {
                 let options = {
@@ -134,12 +143,13 @@
                         debug: true
                     },
                     connection: {
+                        secure: true,
                         cluster: 'aws',
                         reconnect: true
                     },
                     identity: {
-                        username: this.username,
-                        password: this.oAuth
+                        username: this.usernameInput,
+                        password: this.oAuthInput
                     },
                 }
                 this.createBotMutation(options)
@@ -162,7 +172,6 @@
                 if(this.bot != null && this.loadingState.error == null) {
                     this.destroyBotMutation()
                 }
-                this.cleanFailedJoinChannelsMutation()
                 this.loadingState.error = null
                 this.loadingState.connecting = true
                 await this.createBot()
@@ -170,7 +179,7 @@
                 await this.connectBot()
                 await setTimeout(() => {
                     this.loadingState.connecting = false
-                }, this.channels.length * 500)
+                }, this.channelsArray.length * 500)
                 this.joinedChannels.forEach(joinedChannel => {
                     let savedChannelSearch = this.savedChannels.find(savedChannel => savedChannel.channelName == joinedChannel)
                     if(savedChannelSearch == null) {
@@ -192,8 +201,8 @@
             },
             async connectBot() {
                 await this.bot.connect().catch((err) => { this.loadingState.error = err })
-                for(let i = 0; i < this.channels.length; i++) {
-                    await this.joinChannel(this.channels[i])
+                for(let i = 0; i < this.channelsArray.length; i++) {
+                    await this.joinChannel(this.channelsArray[i])
                 }
             },
             async joinChannel(channel) {

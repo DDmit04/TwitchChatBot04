@@ -5,20 +5,20 @@ import * as Cookie from 'js-cookie'
 import channelsNavbar from 'store/modules/channelsNavbar'
 import botDev from 'store/modules/botDev'
 import saveChannelsData from 'store/modules/saveChannelsData'
+import botLogin from 'store/modules/botLogin'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-    strict: true,
+    strict: botDev.state.isDevMode,
     state: {
         bot: null,
-        savedChannels: [],
         joinedChannels: [],
         failedJoinChannels: [],
     },
     plugins: [
         createPersistedState({
-            paths: ['savedChannels', 'saveChannelsData'],
+            paths: ['saveChannelsData', 'botLogin'],
             getState: (key) => Cookie.getJSON(key),
             setState: (key, state) => Cookie.set(key, state, { expires: 1, secure: false })
         })
@@ -26,13 +26,16 @@ export default new Vuex.Store({
     modules: {
         channelsNavbar,
         botDev,
-        saveChannelsData
+        saveChannelsData,
+        botLogin
     },
     getters: {},
     mutations: {
         createBotMutation(state, options) {
             let tmi = require('tmi.js')
             state.bot = new tmi.client(options)
+            state.joinedChannels = []
+            state.failedJoinChannels = []
         },
         destroyBotMutation(state) {
             state.bot.disconnect()
@@ -45,15 +48,11 @@ export default new Vuex.Store({
         addJoinedChannelMutation(state, channel) {
             state.joinedChannels.push(channel)
         },
-        cleanJoinedChannelsMutation(state) {
-            state.joinedChannels = []
-        },
-        cleanFailedJoinChannelsMutation(state) {
-            state.failedJoinChannels = []
-        },
         addFailedJoinedChannelMutation(state, joinErrorState) {
             state.failedJoinChannels.push(joinErrorState)
-        }
+        },
     },
-    actions: {}
+    actions: {
+
+    }
 })

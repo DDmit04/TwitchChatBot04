@@ -62,6 +62,7 @@
         name: "feedbackModal",
         data() {
             return {
+                loading: false,
                 connecting: false,
                 feedbackError: false,
                 feedbackSent: false,
@@ -70,9 +71,9 @@
             }
         },
         computed: {
-          validate() {
-              return this.validateEmail(this.feedbackEmail) && this.feedbackText != ''
-          }
+            validate() {
+                return this.validateEmail(this.feedbackEmail) && this.feedbackText != ''
+            }
         },
         methods: {
             async sendFeedback() {
