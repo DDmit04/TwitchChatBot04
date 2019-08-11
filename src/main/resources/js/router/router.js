@@ -19,6 +19,7 @@ const routes = [
             { path: ':channel', component: voting, props: true },
         ]
     },
+    { path: '*', component: botLogin },
 ]
 
 export default new VueRouter({
