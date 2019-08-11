@@ -10,7 +10,7 @@
     <groupId>twich.bot</groupId>
     <artifactId>demo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>twichBot</name>
+    <name>twitchBot</name>
     <description>Demo project for Spring Boot</description>
 
     <properties>
