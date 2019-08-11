@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>
-        my twitch bot
-    </title>
-    <meta charset="UTF-8">
     <script th:inline="javascript">
         let isDevMode = [[${isDevMode}]]
         let botDevUsername = [[${botDevUsername}]]
@@ -14,6 +10,6 @@
 </head>
 <body>
     <div id="app"></div>
-    <script th:src="${isDevMode} ? 'http://localhost:8003/main.js' : 'js/main.js'"></script>
+    <script th:src="${isDevMode} ? 'http://localhost:8003/main.js' : 'resuorces/static/js/main.js'"></script>
 </body>
 </html>
