@@ -13,7 +13,7 @@
                         <router-link class="nav-link" to="/voting">voting</router-link>
                     </li>
                     <li class="nav-item">
-<!--                        <feedbackModal/>-->
+                        <feedbackModal/>
                     </li>
                 </ul>
                 <span class="badge mx-2" :class="connectionBadgeClass">{{connectionBadgeText}}</span>

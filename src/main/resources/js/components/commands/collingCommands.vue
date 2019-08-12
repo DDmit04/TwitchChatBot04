@@ -132,7 +132,7 @@
 </template>
 
 <script>
-    import {mapState, mapActions} from 'vuex'
+    import {mapState, mapActions, mapMutations} from 'vuex'
     import _ from 'lodash'
 
     export default {
@@ -140,6 +140,7 @@
         props: ['channel'],
         data() {
             return {
+                chatHandlerVar: null,
                 localInstances: [],
                 defaultLocalInstance: {
                     channel: null,
@@ -160,40 +161,52 @@
             }
         },
         created() {
-            for (let i = 0; i < this.joinedChannels.length; i++) {
-                let savedChannelsSearch = this.savedChannels.find(channel => channel.channelName == this.joinedChannels[i])
-                let globalCollingCommandInstance
-                if (savedChannelsSearch.callingCommandInstance == null) {
-                    globalCollingCommandInstance = _.cloneDeep(this.defaultGlobalInstance)
-                    let overViewCommand = {
-                        commandCall: '!commands',
-                        commandAction: 'no commands yet',
-                        commandCoolDown: this.defaultGlobalInstance.commandCoolDownInput,
-                        commandAccess: {...this.defaultGlobalInstance.commandAccessInput},
-                        commandIsReady: true,
-                        commandDisabled: false,
-                        method: null
+            if(this.collingCommandInstances.length == 0) {
+                for (let i = 0; i < this.joinedChannels.length; i++) {
+                    let savedChannelsSearch = this.savedChannels.find(channel => channel.channelName == this.joinedChannels[i])
+                    let globalCollingCommandInstance
+                    if (savedChannelsSearch.callingCommandInstance == null) {
+                        globalCollingCommandInstance = _.cloneDeep(this.defaultGlobalInstance)
+                        let overViewCommand = {
+                            commandCall: '!commands',
+                            commandAction: 'no commands yet',
+                            commandCoolDown: this.defaultGlobalInstance.commandCoolDownInput,
+                            commandAccess: {...this.defaultGlobalInstance.commandAccessInput},
+                            commandIsReady: true,
+                            commandDisabled: false,
+                            method: null
+                        }
+                        globalCollingCommandInstance.commands.push(overViewCommand)
+                        this.pushNewCollingCommandInstanceAction({
+                            instance: globalCollingCommandInstance,
+                            channel: this.joinedChannels[i]
+                        })
+                    } else {
+                        globalCollingCommandInstance = _.cloneDeep(savedChannelsSearch.callingCommandInstance)
                     }
-                    globalCollingCommandInstance.commands.push(overViewCommand)
-                    this.pushNewCollingCommandInstanceAction({
-                        instance: globalCollingCommandInstance,
-                        channel: this.joinedChannels[i]
-                    })
-                } else {
-                    globalCollingCommandInstance = _.cloneDeep(savedChannelsSearch.callingCommandInstance)
+                    let localInstanceAlreadyExist = false
+                    for (let j = 0; j < this.localInstances.length; j++) {
+                        if (this.localInstances[j].channel == this.joinedChannels[i]) {
+                            localInstanceAlreadyExist = true
+                        }
+                    }
+                    if (!localInstanceAlreadyExist) {
+                        let newLocalInstance = _.cloneDeep(this.defaultLocalInstance)
+                        newLocalInstance = Object.assign(newLocalInstance, globalCollingCommandInstance)
+                        newLocalInstance.channel = this.joinedChannels[i]
+                        this.localInstances.push(newLocalInstance)
+                        this.pushNewCollingCommandInstance(newLocalInstance.channel)
+                        this.chatHandlerVar = this.bot.on('chat', (target, context, message, self) => {
+                            this.chatCommandsHandler(target, context, message, self, newLocalInstance)
+                        })
+                    }
                 }
-                let newLocalInstance = _.cloneDeep(this.defaultLocalInstance)
-                newLocalInstance = Object.assign(newLocalInstance, globalCollingCommandInstance)
-                newLocalInstance.channel = this.joinedChannels[i]
-                this.localInstances.push(newLocalInstance)
-                this.bot.on('chat', (target, context, message, self) => {
-                    this.chatCommandsHandler(target, context, message, self, newLocalInstance)
-                })
             }
         },
         computed: {
             ...mapState(['bot', 'joinedChannels']),
             ...mapState('saveChannelsData', ['savedChannels']),
+            ...mapState('localInstances', ['collingCommandInstances']),
             selectedCreateCommandOption() { return this.selectedCommand === 'newCommand' },
             optionNotSelected() { return this.selectedCommand == null },
             currentChannel() { return this.currentLocalCommandInstance.channel },
@@ -343,6 +356,7 @@
         },
         methods: {
             ...mapActions('saveChannelsData', ['pushNewCollingCommandInstanceAction', 'updateCollingCommandInstanceAction']),
+            ...mapMutations('localInstances', ['cleanCollingCommandInstances', 'pushNewCollingCommandInstance']),
             updateGlobalInstance() {
                 this.updateCollingCommandInstanceAction({
                     updatedInstance: this.updatedGlobalInstance,

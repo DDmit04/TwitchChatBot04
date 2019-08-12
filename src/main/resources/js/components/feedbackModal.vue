@@ -63,7 +63,6 @@
         data() {
             return {
                 loading: false,
-                connecting: false,
                 feedbackError: false,
                 feedbackSent: false,
                 feedbackText: '',

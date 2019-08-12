@@ -76,7 +76,7 @@
 </template>
 
 <script>
-    import {mapState, mapActions} from 'vuex'
+    import {mapState, mapActions, mapMutations} from 'vuex'
     import {convertSecToTime} from 'helpers/convertSecToTime'
     import _ from 'lodash'
 
@@ -107,29 +107,33 @@
             }
         },
         created() {
-            for (let i = 0; i < this.joinedChannels.length; i++) {
-                let savedChannelsSearch = this.savedChannels.find(channel => channel.channelName == this.joinedChannels[i])
-                let globalMessageVoteInstance
-                if (savedChannelsSearch.messageVoteInstance == null) {
-                    globalMessageVoteInstance = {...this.defaultGlobalInstance}
-                    this.pushNewMessageVoteInstanceAction({
-                        instance: globalMessageVoteInstance,
-                        channel: this.joinedChannels[i]
+            if(this.messageVoteInstances.length == 0) {
+                for (let i = 0; i < this.joinedChannels.length; i++) {
+                    let savedChannelsSearch = this.savedChannels.find(channel => channel.channelName == this.joinedChannels[i])
+                    let globalMessageVoteInstance
+                    if (savedChannelsSearch.messageVoteInstance == null) {
+                        globalMessageVoteInstance = {...this.defaultGlobalInstance}
+                        this.pushNewMessageVoteInstanceAction({
+                            instance: globalMessageVoteInstance,
+                            channel: this.joinedChannels[i]
+                        })
+                    } else {
+                        globalMessageVoteInstance = savedChannelsSearch.messageVoteInstance
+                    }
+                    let newLocalInstance = {...this.defaultLocalInstance, ...globalMessageVoteInstance}
+                    newLocalInstance.channel = this.joinedChannels[i]
+                    this.localInstances.push(newLocalInstance)
+                    this.pushNewMessageVoteInstancesInstance(newLocalInstance.channel)
+                    this.bot.on('message', (target, context, message, self) => {
+                        this.onMessageHandler(target, context, message, self, newLocalInstance)
                     })
-                } else {
-                    globalMessageVoteInstance = savedChannelsSearch.messageVoteInstance
                 }
-                let newLocalInstance = {...this.defaultLocalInstance, ...globalMessageVoteInstance}
-                newLocalInstance.channel = this.joinedChannels[i]
-                this.localInstances.push(newLocalInstance)
-                this.bot.on('message', (target, context, message, self) => {
-                    this.onMessageHandler(target, context, message, self, newLocalInstance)
-                })
             }
         },
         computed: {
             ...mapState(['bot', 'joinedChannels']),
             ...mapState('saveChannelsData', ['savedChannels']),
+            ...mapState('localInstances', ['messageVoteInstances']),
             currentChannel() { return this.currentLocalVoteInstance.channel },
             currentLocalVoteInstance() {
                 let voteInstanceSearch = this.localInstances.find(inst => inst.channel == this.channel)
@@ -216,6 +220,7 @@
         },
         methods: {
             ...mapActions('saveChannelsData', ['pushNewMessageVoteInstanceAction', 'updateMessageVoteInstanceAction']),
+            ...mapMutations('localInstances', ['pushNewMessageVoteInstancesInstance', 'cleanMessageVoteInstancesInstances']),
             updateGlobalInstance() {
                 this.updateMessageVoteInstanceAction({
                     updatedInstance: this.updatedGlobalInstance,

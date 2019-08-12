@@ -31,23 +31,25 @@
         watch: {
             '$route' (to, from) {
                 this.currentPath = to.matched[0].path
+                let finalPath = this.currentPath + '/'
                 if(to.path.match('voting')) {
                     if(this.lastSelectedChanelVote == null) {
                         if(this.joinedChannelsExists) {
-                            this.$router.push(this.currentPath + '/' + this.joinedChannels[0])
+                            finalPath += this.joinedChannels[0]
                         }
                     } else {
-                        this.$router.push(this.currentPath + '/' + this.lastSelectedChanelVote)
+                        finalPath += this.lastSelectedChanelVote
                     }
                 } else if(to.path.match('command')) {
                     if(this.lastSelectedChanelCommands == null) {
                         if(this.joinedChannelsExists) {
-                            this.$router.push(this.currentPath + '/' + this.joinedChannels[0])
+                            finalPath += this.joinedChannels[0]
                         }
                     } else {
-                        this.$router.push(this.currentPath + '/' + this.lastSelectedChanelCommands)
+                        finalPath += this.lastSelectedChanelCommands
                     }
                 }
+                this.$router.push(finalPath).catch(err => {})
             }
         },
         created() {

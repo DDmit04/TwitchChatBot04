@@ -9,6 +9,10 @@ const mutations = {
     },
     updateSelectedChanelVoteMutation(state, channel) {
         state.lastSelectedChanelVote = channel
+    },
+    cleanModuleDataMutation(state) {
+        state.lastSelectedChanelCommands = null
+        state.lastSelectedChanelVote = null
     }
 }
 const actions = {}

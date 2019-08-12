@@ -6,6 +6,7 @@ import channelsNavbar from 'store/modules/channelsNavbar'
 import botDev from 'store/modules/botDev'
 import saveChannelsData from 'store/modules/saveChannelsData'
 import botLogin from 'store/modules/botLogin'
+import localInstances from 'store/modules/localInstances'
 
 Vue.use(Vuex)
 
@@ -27,7 +28,8 @@ export default new Vuex.Store({
         channelsNavbar,
         botDev,
         saveChannelsData,
-        botLogin
+        botLogin,
+        localInstances
     },
     getters: {},
     mutations: {
@@ -40,8 +42,8 @@ export default new Vuex.Store({
         destroyBotMutation(state) {
             state.bot.disconnect()
             state.bot = null
-            state.joinedChannels = []
-            state.failedJoinChannels = []
+            localInstances.mutations.cleanModuleDataMutation(localInstances.state)
+            channelsNavbar.mutations.cleanModuleDataMutation(channelsNavbar.state)
             channelsNavbar.state.lastSelectedChanelVote = null
             channelsNavbar.state.lastSelectedChanelCommands = null
         },

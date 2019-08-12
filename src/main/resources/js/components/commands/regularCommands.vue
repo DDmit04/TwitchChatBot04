@@ -122,7 +122,7 @@
 </template>
 
 <script>
-    import {mapState, mapActions} from 'vuex'
+    import {mapState, mapActions, mapMutations} from 'vuex'
     import {convertSecToTime} from 'helpers/convertSecToTime'
     import _ from 'lodash'
 
@@ -146,10 +146,11 @@
             }
         },
         created() {
+            if(this.regularCommandInstances.length == 0) {
                 for (let i = 0; i < this.joinedChannels.length; i++) {
                     let savedChannelsSearch = this.savedChannels.find(channel => channel.channelName == this.joinedChannels[i])
                     let globalRegularCommandInstance
-                    if(savedChannelsSearch.regularCommandInstance == null) {
+                    if (savedChannelsSearch.regularCommandInstance == null) {
                         globalRegularCommandInstance = _.clone(this.defaultGlobalInstance)
                         this.pushNewRegularCommandInstanceAction({
                             instance: globalRegularCommandInstance,
@@ -162,12 +163,14 @@
                     newLocalInstance = Object.assign(newLocalInstance, globalRegularCommandInstance)
                     newLocalInstance.channel = this.joinedChannels[i]
                     this.localInstances.push(newLocalInstance)
+                    this.pushNewRegularCommandInstance(newLocalInstance.channel)
                 }
+            }
         },
         computed: {
             ...mapState(['bot', 'joinedChannels', 'savedChannels']),
-            ...mapState('chatCommands', ['regularCommandInstances']),
             ...mapState('saveChannelsData', ['savedChannels']),
+            ...mapState('localInstances', ['regularCommandInstances']),
             currentChannel() { return this.currentLocalCommandInstance.channel },
             selectedCreateCommandOption() { return this.selectedCommand === 'newCommand' },
             optionNotSelected() { return this.selectedCommand == null },
@@ -271,9 +274,7 @@
                 }
             },
             commands: {
-                get() {
-
-                    return this.currentLocalCommandInstance.commands },
+                get() { return this.currentLocalCommandInstance.commands },
                 set(newVal) {
                     this.currentLocalCommandInstance.commands = newVal
                     this.updateGlobalInstance()
@@ -292,6 +293,7 @@
         },
         methods: {
             ...mapActions('saveChannelsData', ['pushNewRegularCommandInstanceAction', 'updateRegularCommandInstanceAction']),
+            ...mapMutations('localInstances', ['pushNewRegularCommandInstance', 'cleanRegularCommandInstancesInstances']),
             updateGlobalInstance() {
                 this.updateRegularCommandInstanceAction({
                     updatedInstance: this.updatedGlobalInstance,

@@ -112,6 +112,7 @@
                     voteTime: 0,
                     votingIsRunning: false,
                     countedUsers: [],
+                    active: true
                 },
                 defaultGlobalInstance: {
                     messagesToCountInput: 'SMOrc',
@@ -122,29 +123,33 @@
             }
         },
         created() {
-            for (let i = 0; i < this.joinedChannels.length; i++) {
-                let savedChannelsSearch = this.savedChannels.find(channel => channel.channelName == this.joinedChannels[i])
-                let globalMessageCountInstance
-                if (savedChannelsSearch.messageCountInstance == null) {
-                    globalMessageCountInstance = {...this.defaultGlobalInstance}
-                    this.pushNewMessageCountInstanceAction({
-                        instance: globalMessageCountInstance,
-                        channel: this.joinedChannels[i]
+            if(this.messageCountInstances.length == 0) {
+                for (let i = 0; i < this.joinedChannels.length; i++) {
+                    let savedChannelsSearch = this.savedChannels.find(channel => channel.channelName == this.joinedChannels[i])
+                    let globalMessageCountInstance
+                    if (savedChannelsSearch.messageCountInstance == null) {
+                        globalMessageCountInstance = {...this.defaultGlobalInstance}
+                        this.pushNewMessageCountInstanceAction({
+                            instance: globalMessageCountInstance,
+                            channel: this.joinedChannels[i]
+                        })
+                    } else {
+                        globalMessageCountInstance = {...savedChannelsSearch.messageCountInstance}
+                    }
+                    let newLocalInstance = {...this.defaultLocalInstance, ...globalMessageCountInstance}
+                    newLocalInstance.channel = this.joinedChannels[i]
+                    this.localInstances.push(newLocalInstance)
+                    this.pushNewMessageCountInstancesInstance(newLocalInstance.channel)
+                    this.bot.on('message', (target, context, message, self) => {
+                        this.onMessageHandler(target, context, message, self, newLocalInstance)
                     })
-                } else {
-                    globalMessageCountInstance = {...savedChannelsSearch.messageCountInstance}
                 }
-                let newLocalInstance = {...this.defaultLocalInstance, ...globalMessageCountInstance}
-                newLocalInstance.channel = this.joinedChannels[i]
-                this.localInstances.push(newLocalInstance)
-                this.bot.on('message', (target, context, message, self) => {
-                    this.onMessageHandler(target, context, message, self, newLocalInstance)
-                })
             }
         },
         computed: {
             ...mapState(['bot', 'joinedChannels', 'savedChannels']),
             ...mapState('saveChannelsData', ['savedChannels']),
+            ...mapState('localInstances', ['messageCountInstances']),
             currentChannel() { return this.currentLocalVoteInstance.channel },
             voteCanStart() {
                 let canStart = false
@@ -241,6 +246,7 @@
         },
         methods: {
             ...mapActions('saveChannelsData', ['pushNewMessageCountInstanceAction', 'updateMessageCountInstanceAction', 'pushNewChannelMutation']),
+            ...mapMutations('localInstances', ['pushNewMessageCountInstancesInstance', 'cleanMessageCountInstancesInstances']),
             updateGlobalInstance() {
                 this.updateMessageCountInstanceAction({
                     updatedInstance: this.updatedGlobalInstance,
