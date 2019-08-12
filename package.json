@@ -1,7 +1,7 @@
 {
   "name": "twitchchatBot",
   "version": "1.0.0",
-  "main": "main.js",
+  "main": "index.js",
   "license": "MIT",
   "dependencies": {
     "@babel/polyfill": "^7.4.4",
