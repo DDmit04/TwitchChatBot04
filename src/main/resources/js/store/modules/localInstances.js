@@ -6,16 +6,16 @@ const state = {
 }
 const getters = {}
 const mutations = {
-    pushNewMessageCountInstancesInstance(state, channel) {
+    pushNewLocalMessageCountInstanceMutation(state, channel) {
         state.messageCountInstances.push(channel)
     },
-    pushNewMessageVoteInstancesInstance(state, channel) {
+    pushNewLocalMessageVoteInstanceMutation(state, channel) {
         state.messageVoteInstances.push(channel)
     },
-    pushNewRegularCommandInstance(state, channel) {
+    pushNewLocalRegularCommandInstanceMutation(state, channel) {
         state.regularCommandInstances.push(channel)
     },
-    pushNewCollingCommandInstance(state ,channel) {
+    pushNewLocalCollingCommandInstanceMutation(state , channel) {
         state.collingCommandInstances.push(channel)
     },
     cleanModuleDataMutation(state) {

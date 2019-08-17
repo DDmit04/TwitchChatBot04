@@ -2,13 +2,13 @@
     <div>
         <b-card class="shadow">
             <div slot="header">
-                <b-button class="btn-block mb-2"
+                <b-button class="btn-block mt-2"
                           v-b-toggle.regularCommandCollapse
                           :disabled="commands.length == 0"
                           variant="primary">
                     regular commands status
                 </b-button>
-                <b-collapse class="mb-2" id="regularCommandCollapse">
+                <b-collapse class="mt-2" id="regularCommandCollapse">
                     <ul class="list-group">
                         <li v-for="(command, index) in commands"
                             class="list-group-item d-flex justify-content-between align-items-center mt-1"
@@ -41,7 +41,7 @@
                 <span class="badge badge-primary badge-pill ml-2">{{convertSecToTime(currentCommand)}}</span>
             </div>
             <b-card-text>
-                <b-form-select class="mb-2" v-model="selectedCommand">
+                <b-form-select class="mt-2" v-model="selectedCommand">
                     <option :value="null" disabled>-- select command --</option>
                     <option :value="index" v-for="(command, index) in commands">
                         {{command.commandCall}}
@@ -52,7 +52,7 @@
                     <option :value="'newCommand'">-- create new command --</option>
                 </b-form-select>
                 <div class="form-group">
-                    <input class="form-control mb-2"
+                    <input class="form-control mt-2"
                            v-model="commandCallInput"
                            maxlength="30"
                            :disabled="optionNotSelected || commandIsRunning"
@@ -65,7 +65,7 @@
                           style="color: red">
                     command with call {{commandCallInput}} already exist!
                 </span>
-                    <input class="form-control mb-2"
+                    <input class="form-control mt-2"
                            v-model="commandActionInput"
                            :disabled="optionNotSelected || commandIsRunning"
                            type="text"
@@ -73,7 +73,7 @@
                            v-validate="{required: commandActionInput != null}"
                            placeholder="command action"/>
                     <span style="color: red">{{ errors.first('command action') }}</span>
-                    <input class="form-control mb-2"
+                    <input class="form-control mt-2"
                            v-model="commandCoolDownInput"
                            :disabled="optionNotSelected || commandIsRunning"
                            type="number"
@@ -163,7 +163,7 @@
                     newLocalInstance = Object.assign(newLocalInstance, globalRegularCommandInstance)
                     newLocalInstance.channel = this.joinedChannels[i]
                     this.localInstances.push(newLocalInstance)
-                    this.pushNewRegularCommandInstance(newLocalInstance.channel)
+                    this.pushNewLocalRegularCommandInstanceMutation(newLocalInstance.channel)
                 }
             }
         },
@@ -227,6 +227,7 @@
             },
             updatedGlobalInstance() {
                 return {
+                    id: this.currentLocalCommandInstance.id,
                     commands: _.cloneDeep(this.commands),
                     commandCallInput: this.commandCallInput,
                     commandActionInput: this.commandActionInput,
@@ -293,7 +294,7 @@
         },
         methods: {
             ...mapActions('saveChannelsData', ['pushNewRegularCommandInstanceAction', 'updateRegularCommandInstanceAction']),
-            ...mapMutations('localInstances', ['pushNewRegularCommandInstance', 'cleanRegularCommandInstancesInstances']),
+            ...mapMutations('localInstances', ['pushNewLocalRegularCommandInstanceMutation']),
             updateGlobalInstance() {
                 this.updateRegularCommandInstanceAction({
                     updatedInstance: this.updatedGlobalInstance,
@@ -319,7 +320,7 @@
                     commandIsRunning: false,
                     commandTime: this.commandCoolDownInput,
                     commandTimer: null,
-                    method: null
+                    method: null,
                 }
                 let newCommands = this.commands
                 newCommands.push(newCommand)

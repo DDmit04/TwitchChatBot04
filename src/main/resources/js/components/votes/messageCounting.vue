@@ -3,7 +3,7 @@
         <b-card class="shadow">
             <div slot="header">
                 <b-progress v-if="messageCount > 0 || votingIsRunning"
-                            class="mb-2"
+                            class="mt-2"
                             :max="progressMax"
                             height="2rem">
                         <b-progress-bar v-for="(messageCountObject, index) in messageCountObjects"
@@ -29,7 +29,7 @@
             </div>
             <b-card-text>
                 <div class="form-group">
-                    <input class="form-control mb-2"
+                    <input class="form-control mt-2"
                            type="text"
                            :disabled="votingIsRunning"
                            v-model="messagesToCountInput"
@@ -37,7 +37,7 @@
                            placeholder="messages to count"
                            v-validate="'required'"/>
                     <span style="color: red">{{ errors.first('messages to count') }}</span>
-                    <input class="form-control mb-2"
+                    <input class="form-control mt-2"
                            type="number"
                            :disabled="votingIsRunning"
                            v-model="voteTimeInput"
@@ -45,12 +45,12 @@
                            name="count time"
                            v-validate="{ min_value: 0 }"/>
                     <span style="color: red">{{ errors.first('count time') }}</span>
-                    <b-button class="btn-block mb-2"
+                    <b-button class="btn-block mt-2"
                               v-b-toggle.collapse
                               variant="primary">
                         more options
                     </b-button>
-                    <b-collapse class="mb-2" id="collapse">
+                    <b-collapse class="mt-2" id="collapse">
                         <ul class="list-group">
                             <li class="list-group-item">
                                 <b-form-checkbox v-model="ignoreLetterCase"
@@ -139,7 +139,7 @@
                     let newLocalInstance = {...this.defaultLocalInstance, ...globalMessageCountInstance}
                     newLocalInstance.channel = this.joinedChannels[i]
                     this.localInstances.push(newLocalInstance)
-                    this.pushNewMessageCountInstancesInstance(newLocalInstance.channel)
+                    this.pushNewLocalMessageCountInstanceMutation(newLocalInstance.channel)
                     this.bot.on('message', (target, context, message, self) => {
                         this.onMessageHandler(target, context, message, self, newLocalInstance)
                     })
@@ -246,7 +246,7 @@
         },
         methods: {
             ...mapActions('saveChannelsData', ['pushNewMessageCountInstanceAction', 'updateMessageCountInstanceAction', 'pushNewChannelMutation']),
-            ...mapMutations('localInstances', ['pushNewMessageCountInstancesInstance', 'cleanMessageCountInstancesInstances']),
+            ...mapMutations('localInstances', ['pushNewLocalMessageCountInstanceMutation']),
             updateGlobalInstance() {
                 this.updateMessageCountInstanceAction({
                     updatedInstance: this.updatedGlobalInstance,

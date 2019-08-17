@@ -24,11 +24,11 @@ const mutations = {
     },
     pushNewCollingCommandInstanceMutation(state, {instance, channel}) {
         let savedChannelSearch = state.savedChannels.find(savedChannel => savedChannel.channelName == channel)
-        savedChannelSearch.callingCommandInstance = Object.assign({}, instance)
+        savedChannelSearch.collingCommandInstance = Object.assign({}, instance)
     },
     updateCollingCommandInstanceMutation(state, {updatedInstance, channel}) {
         let savedChannelSearch = state.savedChannels.find(savedChannel => savedChannel.channelName == channel)
-        savedChannelSearch.callingCommandInstance = Object.assign({}, updatedInstance)
+        savedChannelSearch.collingCommandInstance = Object.assign({}, updatedInstance)
     },
     pushNewRegularCommandInstanceMutation(state, {instance, channel}) {
         let savedChannelSearch = state.savedChannels.find(savedChannel => savedChannel.channelName == channel)
@@ -40,11 +40,22 @@ const mutations = {
     },
 }
 const actions = {
+    addChannelAction({commit}, channelObject) {
+        let savedChannel = {
+            id: channelObject.id,
+            channelName: channelObject.channelName,
+            regularCommandInstance: channelObject.regularCommandInstance,
+            collingCommandInstance: channelObject.collingCommandInstance,
+            messageCountInstance: channelObject.messageCountInstance,
+            messageVoteInstance: channelObject.messageVoteInstance
+        }
+        commit('pushNewChannelMutation', savedChannel)
+    },
     pushNewChannelAction({commit}, channel) {
         let newChannel = {
             channelName: channel,
             regularCommandInstance: null,
-            callingCommandInstance: null,
+            collingCommandInstance: null,
             messageCountInstance: null,
             messageVoteInstance: null
         }

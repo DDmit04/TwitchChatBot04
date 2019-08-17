@@ -3,7 +3,7 @@
         <b-card class="shadow">
             <div slot="header">
                 <b-progress v-if="voteResult != 0 || votingIsRunning"
-                        class="mb-2"
+                        class="mt-2"
                             :max="Number(upBorder)"
                             :animated="votingIsRunning"
                             height="2rem">
@@ -26,7 +26,7 @@
             </div>
             <b-card-text>
                 <div class="form-group">
-                    <input class="form-control mb-2"
+                    <input class="form-control mt-2"
                            type="number"
                            :disabled="votingIsRunning"
                            v-model="downBorder"
@@ -34,7 +34,7 @@
                            placeholder="down border"
                            v-validate="'required'"/>
                     <span style="color: red">{{ errors.first('down border') }}</span>
-                    <input class="form-control mb-2"
+                    <input class="form-control mt-2"
                            type="number"
                            :disabled="votingIsRunning"
                            v-model="upBorder"
@@ -42,7 +42,7 @@
                            placeholder="up border"
                            v-validate="'required'"/>
                     <span style="color: red">{{ errors.first('up border') }}</span>
-                    <input class="form-control mb-2"
+                    <input class="form-control mt-2"
                            type="number"
                            :disabled="votingIsRunning"
                            v-model="currentLocalVoteInstance.voteTimeInput"
@@ -62,8 +62,8 @@
                     <div v-if="votingIsRunning">
                         stop voting
                         <span class="badge badge-light">
-                        {{getVoteTime()}}
-                    </span>
+                            {{getVoteTime()}}
+                        </span>
                     </div>
                     <div v-else>
                         start voting
@@ -86,13 +86,11 @@
         data() {
             return {
                 localInstances: [],
-                //global = store (saved)
                 defaultGlobalInstance: {
                     downBorder: 1,
                     upBorder: 10,
                     voteTimeInput: 60,
                 },
-                //local = component (not saved)
                 defaultLocalInstance: {
                     channel: null,
                     voteTime: 0,
@@ -123,7 +121,7 @@
                     let newLocalInstance = {...this.defaultLocalInstance, ...globalMessageVoteInstance}
                     newLocalInstance.channel = this.joinedChannels[i]
                     this.localInstances.push(newLocalInstance)
-                    this.pushNewMessageVoteInstancesInstance(newLocalInstance.channel)
+                    this.pushNewLocalMessageVoteInstanceMutation(newLocalInstance.channel)
                     this.bot.on('message', (target, context, message, self) => {
                         this.onMessageHandler(target, context, message, self, newLocalInstance)
                     })
@@ -220,7 +218,7 @@
         },
         methods: {
             ...mapActions('saveChannelsData', ['pushNewMessageVoteInstanceAction', 'updateMessageVoteInstanceAction']),
-            ...mapMutations('localInstances', ['pushNewMessageVoteInstancesInstance', 'cleanMessageVoteInstancesInstances']),
+            ...mapMutations('localInstances', ['pushNewLocalMessageVoteInstanceMutation']),
             updateGlobalInstance() {
                 this.updateMessageVoteInstanceAction({
                     updatedInstance: this.updatedGlobalInstance,

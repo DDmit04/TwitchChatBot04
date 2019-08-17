@@ -2,13 +2,13 @@
     <div>
         <b-card class="shadow">
             <div slot="header">
-                <b-button class="btn-block mb-2"
+                <b-button class="btn-block mt-2"
                           v-b-toggle.regularCommandsStatusCollapse
                           :disabled="commands.length == 0"
                           variant="primary">
                     colling commands status
                 </b-button>
-                <b-collapse class="mb-2" id="regularCommandsStatusCollapse">
+                <b-collapse class="mt-2" id="regularCommandsStatusCollapse">
                     <ul class="list-group">
                         <li v-for="(command, index) in commands"
                             class="list-group-item d-flex justify-content-between align-items-center  mt-1"
@@ -45,7 +45,7 @@
                 </b-collapse>
             </div>
             <b-card-text>
-                <b-form-select class="mb-2" v-model="selectedCommand">
+                <b-form-select class="mt-2" v-model="selectedCommand">
                     <option :value="null" disabled>
                         -- select command --
                     </option>
@@ -59,13 +59,13 @@
                         -- create new command --
                     </option>
                 </b-form-select>
-                <b-button class="btn-block mb-2"
+                <b-button class="btn-block mt-2"
                           v-b-toggle.collingCommandCollapse
                           :disabled="optionNotSelected"
                           variant="primary">
                     command access
                 </b-button>
-                <b-collapse class="mb-2" id="collingCommandCollapse">
+                <b-collapse class="mt-2" id="collingCommandCollapse">
                     <ul class="list-group">
                         <li class="list-group-item">
                             <b-form-checkbox switch v-model="commandFullAccess">all</b-form-checkbox>
@@ -82,9 +82,9 @@
                     </ul>
                 </b-collapse>
                 <div class="form-group">
-                    <input class="form-control mb-2"
+                    <input class="form-control mt-2"
                            maxlength="30"
-                           :disabled="optionNotSelected || selectedCommand == 0"
+                           :disabled="optionNotSelected"
                            v-model="commandCallInput"
                            type="text"
                            name="command call"
@@ -98,15 +98,15 @@
                           style="color: red">
                     command with call {{commandCallInput}} already exist!
                 </span>
-                    <input class="form-control mb-2"
-                           :disabled="optionNotSelected  || selectedCommand == 0"
+                    <input class="form-control mt-2"
+                           :disabled="optionNotSelected"
                            v-model="commandActionInput"
                            type="text"
                            name="action"
                            v-validate="{required: commandActionInput != null}"
                            placeholder="command action"/>
                     <span style="color: red">{{ errors.first('command action') }}</span>
-                    <input class="form-control mb-2"
+                    <input class="form-control mt-2"
                            :disabled="optionNotSelected"
                            v-model="commandCoolDownInput"
                            type="number"
@@ -161,11 +161,14 @@
             }
         },
         created() {
+            if(!this.optionNotSelected && !this.selectedCreateCommandOption) {
+                this.saveCommandToBuffer(this.selectedCommand)
+            }
             if(this.collingCommandInstances.length == 0) {
                 for (let i = 0; i < this.joinedChannels.length; i++) {
                     let savedChannelsSearch = this.savedChannels.find(channel => channel.channelName == this.joinedChannels[i])
                     let globalCollingCommandInstance
-                    if (savedChannelsSearch.callingCommandInstance == null) {
+                    if (savedChannelsSearch.collingCommandInstance == null) {
                         globalCollingCommandInstance = _.cloneDeep(this.defaultGlobalInstance)
                         let overViewCommand = {
                             commandCall: '!commands',
@@ -174,7 +177,7 @@
                             commandAccess: {...this.defaultGlobalInstance.commandAccessInput},
                             commandIsReady: true,
                             commandDisabled: false,
-                            method: null
+                            method: null,
                         }
                         globalCollingCommandInstance.commands.push(overViewCommand)
                         this.pushNewCollingCommandInstanceAction({
@@ -182,24 +185,23 @@
                             channel: this.joinedChannels[i]
                         })
                     } else {
-                        globalCollingCommandInstance = _.cloneDeep(savedChannelsSearch.callingCommandInstance)
-                    }
-                    let localInstanceAlreadyExist = false
-                    for (let j = 0; j < this.localInstances.length; j++) {
-                        if (this.localInstances[j].channel == this.joinedChannels[i]) {
-                            localInstanceAlreadyExist = true
+                        let collingCommandInstance = savedChannelsSearch.collingCommandInstance
+                        let commandAccess = {...this.defaultGlobalInstance.commandAccessInput}
+                        if(collingCommandInstance.selectedCommand != null
+                            && collingCommandInstance.selectedCommand != 'newCommand') {
+                            commandAccess = {...collingCommandInstance.commands[collingCommandInstance.selectedCommand].commandAccess}
                         }
+                        globalCollingCommandInstance = _.cloneDeep(savedChannelsSearch.collingCommandInstance)
+                        globalCollingCommandInstance.commandAccessInput = {...commandAccess}
                     }
-                    if (!localInstanceAlreadyExist) {
-                        let newLocalInstance = _.cloneDeep(this.defaultLocalInstance)
-                        newLocalInstance = Object.assign(newLocalInstance, globalCollingCommandInstance)
-                        newLocalInstance.channel = this.joinedChannels[i]
-                        this.localInstances.push(newLocalInstance)
-                        this.pushNewCollingCommandInstance(newLocalInstance.channel)
-                        this.chatHandlerVar = this.bot.on('chat', (target, context, message, self) => {
-                            this.chatCommandsHandler(target, context, message, self, newLocalInstance)
-                        })
-                    }
+                    let newLocalInstance = _.cloneDeep(this.defaultLocalInstance)
+                    newLocalInstance = Object.assign(newLocalInstance, globalCollingCommandInstance)
+                    newLocalInstance.channel = this.joinedChannels[i]
+                    this.localInstances.push(newLocalInstance)
+                    this.pushNewLocalCollingCommandInstanceMutation(newLocalInstance.channel)
+                    this.chatHandlerVar = this.bot.on('chat', (target, context, message, self) => {
+                        this.chatCommandsHandler(target, context, message, self, newLocalInstance)
+                    })
                 }
             }
         },
@@ -223,6 +225,7 @@
             },
             updatedGlobalInstance() {
                 return {
+                    id: this.currentLocalCommandInstance.id,
                     commands: _.cloneDeep(this.commands),
                     commandCallInput: this.commandCallInput,
                     commandActionInput: this.commandActionInput,
@@ -356,7 +359,7 @@
         },
         methods: {
             ...mapActions('saveChannelsData', ['pushNewCollingCommandInstanceAction', 'updateCollingCommandInstanceAction']),
-            ...mapMutations('localInstances', ['cleanCollingCommandInstances', 'pushNewCollingCommandInstance']),
+            ...mapMutations('localInstances', ['pushNewLocalCollingCommandInstanceMutation']),
             updateGlobalInstance() {
                 this.updateCollingCommandInstanceAction({
                     updatedInstance: this.updatedGlobalInstance,
@@ -384,7 +387,7 @@
                     commandAccess: {...this.commandAccessInput},
                     commandIsReady: true,
                     commandDisabled: false,
-                    method: null
+                    method: null,
                 }
                 let newCommands = this.commands
                 newCommands.push(newCommand)
@@ -416,8 +419,8 @@
                 command.commandDisabled = !command.commandDisabled
             },
             saveCommandToBuffer(selectedCommand) {
-                this.commandBuffer = _.clone(this.commands[selectedCommand])
-                this.commandBuffer.commandAccess = _.clone(this.commands[selectedCommand].commandAccess)
+                this.commandBuffer = _.cloneDeep(this.commands[selectedCommand])
+                this.commandBuffer.commandAccess = _.cloneDeep(this.commands[selectedCommand].commandAccess)
             },
             checkCommandAccess(user, commandAccessObject) {
                 let accessConfirmed = false

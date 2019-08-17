@@ -35,22 +35,22 @@
                                     :disabled="!canStartConnection || loadingState.disconnecting"
                                     @click="loginControl">
                                 <div v-if="loadingState.connecting || loadingState.disconnecting">
-                                    <div v-if="loadingState.disconnecting">
+                                    <sapn v-if="loadingState.disconnecting">
                                         disconnecting...
-                                    </div>
-                                    <div v-else>
+                                    </sapn>
+                                    <span v-else>
                                         connecting...
-                                    </div>
+                                    </span>
                                     <b-spinner small></b-spinner>
                                 </div>
-                                <div v-else-if="bot == null
+                                <sapn v-else-if="bot == null
                                         || loadingState.error != null
                                         || joinedChannels.length == 0">
                                     connect
-                                </div>
-                                <div v-else>
+                                </sapn>
+                                <span v-else>
                                     disconnect
-                                </div>
+                                </span>
                             </button>
                         </div>
                         <bot-login-connection-notify/>
@@ -62,9 +62,10 @@
 </template>
 
 <script>
-    // import twitchApi from 'api/twitchApi'
     import {mapState, mapMutations, mapActions} from 'vuex'
     import botLoginConnectionNotify from 'components/botLogin/botLoginConnectionNotify.vue'
+    import serverApi from 'api/serverApi'
+
 
     export default {
         name: "botLogin",
@@ -86,20 +87,9 @@
                 this.oAuthInput = this.botDevOauth
                 this.channelsInput = this.botDevChannels
             }
-            // let werds = ['lul', 'zulul']
-            // let str = "lul lulabs zululsbas zulul sba";
-            // let resExp = '/'
-            // werds.forEach(werd => resExp += werd + '|' )
-            // resExp += '#/g'
-            // resExp = resExp.replace('|#', '')
-            // resExp = resExp.replace('|', ' | ')
-            // alert(resExp)
-            // alert( str.match(/lul | zulu/g) )
-            // str = str.replace(/(<<)\w*(>>)/g, 'username')
-            // console.log(str)
         },
         computed: {
-            ...mapState(['bot', 'joinedChannels', 'failedJoinChannels']),
+            ...mapState(['bot', 'joinedChannels', 'failedJoinChannels', 'currentUser']),
             ...mapState('botDev', ['isDevMode', 'botDevUsername', 'botDevOauth', 'botDevChannels']),
             ...mapState('botLogin', ['username', 'oAuth', 'channels']),
             ...mapState('saveChannelsData', ['savedChannels']),
@@ -136,11 +126,11 @@
         methods: {
             ...mapMutations(['createBotMutation', 'destroyBotMutation','addJoinedChannelMutation', 'addFailedJoinedChannelMutation']),
             ...mapMutations('botLogin', ['updateUsernameMutation', 'updateOAuthMutation', 'updateChannelsMutation']),
-            ...mapActions('saveChannelsData', ['pushNewChannelAction']),
+            ...mapActions('saveChannelsData', ['pushNewChannelAction', 'addChannelAction']),
             createBot() {
                 let options = {
                     options: {
-                        debug: true
+                        debug: this.isDevMode
                     },
                     connection: {
                         secure: true,
@@ -166,6 +156,9 @@
                 this.loadingState.connecting = false
                 this.loadingState.error = null
                 await this.destroyBotMutation()
+                if(this.currentUser != null) {
+                    await this.saveChannelsToServer()
+                }
                 this.loadingState.disconnecting = false
             },
             async loginBot() {
@@ -177,27 +170,40 @@
                 await this.createBot()
                 await this.setupBot()
                 await this.connectBot()
+                await this.loadChannelsFromServer()
                 await setTimeout(() => {
                     this.loadingState.connecting = false
-                }, this.channelsArray.length * 500)
-                this.joinedChannels.forEach(joinedChannel => {
-                    let savedChannelSearch = this.savedChannels.find(savedChannel => savedChannel.channelName == joinedChannel)
-                    if(savedChannelSearch == null) {
-                        this.pushNewChannelAction(joinedChannel)
-                    }
-                })
-                // let response = await twitchApi.getViewers(this.channel)
-                // let data = await response.json()
-                // console.log(data.chatters)
-                // console.log(data.chatters.moderators)
-                // console.log(data.chatters.viewers)
-                // console.log(data.chatters.vips)
+                }, this.channelsArray.length * 550)
             },
             setupBot() {
                 this.bot.on('connected', this.onConnectedHandler)
                 this.bot.on("join", this.onJoinHandler)
                 this.bot.on("disconnected", this.onDisconnectedHandler)
                 this.bot.on("notice", this.onNoticeHandler)
+            },
+            async saveChannelsToServer() {
+                for (let i = 0; i < this.savedChannels.length; i++) {
+                    let channel = await serverApi.saveChannel(this.savedChannels[i])
+                }
+            },
+            async loadChannelsFromServer() {
+                for (let i = 0; i < this.joinedChannels.length; i++) {
+                    let savedChannelSearchInCookies = this.savedChannels.find(
+                        savedChannel => savedChannel.channelName == this.joinedChannels[i]
+                    )
+                    let serverChannelData = null
+                    if(this.currentUser != null) {
+                        let savedChannelSearchInServer = await serverApi.getChannel(this.joinedChannels[i])
+                        if(savedChannelSearchInServer.bodyText != '') {
+                            serverChannelData = await savedChannelSearchInServer.json()
+                        }
+                    }
+                    if (serverChannelData != null) {
+                        this.addChannelAction(serverChannelData)
+                    } else if(savedChannelSearchInCookies == null) {
+                        this.pushNewChannelAction(this.joinedChannels[i])
+                    }
+                }
             },
             async connectBot() {
                 await this.bot.connect().catch((err) => { this.loadingState.error = err })
