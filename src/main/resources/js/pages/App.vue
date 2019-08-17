@@ -16,8 +16,8 @@
                         <feedbackModal/>
                     </li>
                 </ul>
-                <span class="badge mx-2" :class="connectionBadgeClass">{{connectionBadgeText}}</span>
-                <div class="mr-3">{{currentUser == null ? 'Gest' : currentUser.name}}</div>
+                <span class="badge mx-2" :class="connectionBadgeClass">{{connectionBadgeText}}</span>\
+                <div class="mr-3">{{currentUsername}}</div>
                 <a v-if="currentUser == null" class="btn btn-primary" href="/login">login</a>
                 <a v-else class="btn btn-primary" href="/logout">logout</a>
             </div>
@@ -37,6 +37,9 @@
         },
         computed: {
             ...mapState(['failedJoinChannels', 'joinedChannels', 'currentUser']),
+            currentUsername() {
+                return this.currentUser == null ? 'unknown' : this.currentUser.name
+            },
             connectionBadgeClass() {
                 let resClass
                 if (this.joinedChannels.length == 0 && this.failedJoinChannels.length != 0) {

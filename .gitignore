@@ -30,5 +30,6 @@ build/
 ### VS Code ###
 .vscode/
 
+node
 src/resources/static/js/
 node_modules
