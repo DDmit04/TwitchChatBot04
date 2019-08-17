@@ -28,13 +28,13 @@ public class FeedbackController {
         this.feedbackRepo = feedbackRepo;
     }
 
-    @PostMapping()
+    @PostMapping
     public Feedback getFeedback(@RequestBody Feedback feedback) {
         Feedback savedFeedback = feedbackRepo.save(feedback);
         if(!feedback.getFeedbackText().equals("")
                 && !feedback.getEmail().equals("")
                 && checkEmail.matcher(feedback.getEmail()).matches()) {
-            mailSender.send("orderly chaos feedback from " + feedback.getEmail(), feedback.getFeedbackText());
+            mailSender.send("twitch bot feedback from " + feedback.getEmail(), feedback.getFeedbackText());
         }
         return savedFeedback;
     }

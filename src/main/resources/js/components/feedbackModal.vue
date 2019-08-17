@@ -57,6 +57,7 @@
 
 <script>
     import api from '../api/feedback'
+    import {mapState} from 'vuex'
 
     export default {
         name: "feedbackModal",
@@ -69,7 +70,13 @@
                 feedbackEmail: '',
             }
         },
+        created() {
+            if (this.currentUser != null) {
+                this.feedbackEmail = this.currentUser.email
+            }
+        },
         computed: {
+            ...mapState(['currentUser']),
             validate() {
                 return this.validateEmail(this.feedbackEmail) && this.feedbackText != ''
             }

@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <title>
+        my chat bot
+    </title>
     <script th:inline="javascript">
         let isDevMode = [[${isDevMode}]]
         let botDevUsername = [[${botDevUsername}]]
         let botDevOauth = [[${botDevOauth}]]
         let botDevChannels = [[${botDevChannels}]]
+        let currentUser = [[${currentUser}]]
     </script>
 </head>
 <body>

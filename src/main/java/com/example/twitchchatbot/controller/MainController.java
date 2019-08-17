@@ -1,12 +1,12 @@
 package com.example.twitchchatbot.controller;
 
+import com.example.twitchchatbot.data.User;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.NoHandlerFoundException;
 
 @Controller
 @RequestMapping("/")
@@ -25,7 +25,7 @@ public class MainController {
     private String botDevChannels;
 
     @GetMapping
-    public String mainPage(Model model) {
+    public String mainPage(@AuthenticationPrincipal User user, Model model) {
         boolean isDevMode = true;
         if(profile.equals("prod")) {
             isDevMode = false;
@@ -34,6 +34,7 @@ public class MainController {
         model.addAttribute("botDevUsername", botDevUsername);
         model.addAttribute("botDevOauth", botDevOauth);
         model.addAttribute("botDevChannels", botDevChannels);
+        model.addAttribute("currentUser", user);
         return "index";
     }
 

@@ -13,6 +13,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
     strict: botDev.state.isDevMode,
     state: {
+        currentUser: currentUser,
         bot: null,
         joinedChannels: [],
         failedJoinChannels: [],
