@@ -35,19 +35,19 @@
                                     :disabled="!canStartConnection || loadingState.disconnecting"
                                     @click="loginControl">
                                 <div v-if="loadingState.connecting || loadingState.disconnecting">
-                                    <sapn v-if="loadingState.disconnecting">
+                                    <span v-if="loadingState.disconnecting">
                                         disconnecting...
-                                    </sapn>
+                                    </span>
                                     <span v-else>
                                         connecting...
                                     </span>
                                     <b-spinner small></b-spinner>
                                 </div>
-                                <sapn v-else-if="bot == null
+                                <span v-else-if="bot == null
                                         || loadingState.error != null
                                         || joinedChannels.length == 0">
                                     connect
-                                </sapn>
+                                </span>
                                 <span v-else>
                                     disconnect
                                 </span>
@@ -183,17 +183,19 @@
             },
             async saveChannelsToServer() {
                 for (let i = 0; i < this.savedChannels.length; i++) {
+                    console.log(this.savedChannels[i])
                     let channel = await serverApi.saveChannel(this.savedChannels[i])
                 }
             },
             async loadChannelsFromServer() {
                 for (let i = 0; i < this.joinedChannels.length; i++) {
-                    let savedChannelSearchInCookies = this.savedChannels.find(
+                    let savedChannelSearchInCookies = await this.savedChannels.find(
                         savedChannel => savedChannel.channelName == this.joinedChannels[i]
                     )
                     let serverChannelData = null
                     if(this.currentUser != null) {
                         let savedChannelSearchInServer = await serverApi.getChannel(this.joinedChannels[i])
+                        console.log(savedChannelSearchInServer)
                         if(savedChannelSearchInServer.bodyText != '') {
                             serverChannelData = await savedChannelSearchInServer.json()
                         }
@@ -201,7 +203,11 @@
                     if (serverChannelData != null) {
                         this.addChannelAction(serverChannelData)
                     } else if(savedChannelSearchInCookies == null) {
+                        console.log(this.joinedChannels[i])
+                        console.log(2)
                         this.pushNewChannelAction(this.joinedChannels[i])
+                    } else {
+                        console.log('lul')
                     }
                 }
             },

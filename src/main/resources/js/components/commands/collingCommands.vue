@@ -147,12 +147,14 @@
                     commandBuffer: null,
                 },
                 defaultGlobalInstance: {
+                    id: null,
                     commands: [],
                     commandCallInput: null,
                     commandActionInput: null,
                     commandCoolDownInput: 60,
                     selectedCommand: null,
                     commandAccessInput: {
+                        id: null,
                         moderator: true,
                         subscriber: true,
                         unSubscriber: true
@@ -171,6 +173,7 @@
                     if (savedChannelsSearch.collingCommandInstance == null) {
                         globalCollingCommandInstance = _.cloneDeep(this.defaultGlobalInstance)
                         let overViewCommand = {
+                            id: null,
                             commandCall: '!commands',
                             commandAction: 'no commands yet',
                             commandCoolDown: this.defaultGlobalInstance.commandCoolDownInput,
@@ -381,6 +384,7 @@
             },
             addCommand() {
                 let newCommand = {
+                    id: null,
                     commandCall: this.commandCallInput,
                     commandAction: this.commandActionInput,
                     commandCoolDown: this.commandCoolDownInput,

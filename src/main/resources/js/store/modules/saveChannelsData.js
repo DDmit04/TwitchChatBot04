@@ -43,6 +43,7 @@ const actions = {
     addChannelAction({commit}, channelObject) {
         let savedChannel = {
             id: channelObject.id,
+            channelUser: channelObject.channelUser,
             channelName: channelObject.channelName,
             regularCommandInstance: channelObject.regularCommandInstance,
             collingCommandInstance: channelObject.collingCommandInstance,
@@ -53,6 +54,8 @@ const actions = {
     },
     pushNewChannelAction({commit}, channel) {
         let newChannel = {
+            id: null,
+            channelUser: null,
             channelName: channel,
             regularCommandInstance: null,
             collingCommandInstance: null,

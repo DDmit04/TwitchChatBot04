@@ -22,20 +22,28 @@ public class SaveChannelsDataController {
 
     @GetMapping("/{channelName}")
     private Channel getChannel(@PathVariable String channelName, @AuthenticationPrincipal User user) {
-        return channelRepo.findByChannelName(channelName, user);
+        Channel loadedChannel = null;
+        if(user != null) {
+            loadedChannel = channelRepo.findByChannelName(channelName, user);
+        }
+        return loadedChannel;
     }
 
     @PostMapping
     private Channel setChannel(@RequestBody Channel channel, @AuthenticationPrincipal User user) {
-        channel.setChannelUser(user);
-        channel.getCollingCommandInstance().getCommands().forEach(command -> {
-            command.setCollingCommandInstance(null);
-            command.setCollingCommandInstance(channel.getCollingCommandInstance());
-        });
-        channel.getRegularCommandInstance().getCommands().forEach(command -> {
-            command.setRegularCommandInstance(null);
-            command.setRegularCommandInstance(channel.getRegularCommandInstance());
-        });
-        return channelRepo.save(channel);
+        Channel savedChannel = null;
+        if(user != null) {
+            if (channel.getChannelUser() == null) {
+                channel.setChannelUser(user);
+            }
+            channel.getCollingCommandInstance().getCommands().forEach(command -> {
+                command.setCollingCommandInstance(channel.getCollingCommandInstance());
+            });
+            channel.getRegularCommandInstance().getCommands().forEach(command -> {
+                command.setRegularCommandInstance(channel.getRegularCommandInstance());
+            });
+            savedChannel = channelRepo.save(channel);
+        }
+        return savedChannel;
     }
 }

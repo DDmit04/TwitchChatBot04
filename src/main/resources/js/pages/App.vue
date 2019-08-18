@@ -16,7 +16,7 @@
                         <feedbackModal/>
                     </li>
                 </ul>
-                <span class="badge mx-2" :class="connectionBadgeClass">{{connectionBadgeText}}</span>\
+                <span class="badge mx-2" :class="connectionBadgeClass">{{connectionBadgeText}}</span>
                 <div class="mr-3">{{currentUsername}}</div>
                 <a v-if="currentUser == null" class="btn btn-primary" href="/login">login</a>
                 <a v-else class="btn btn-primary" href="/logout">logout</a>

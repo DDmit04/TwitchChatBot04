@@ -29,11 +29,11 @@ public class Channel {
     private User channelUser;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "colling_command_instance_id")
+    @JoinColumn(name = "colling_commands_instance_id")
     private CollingCommandInstance collingCommandInstance;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "regular_command_instance_id")
+    @JoinColumn(name = "regular_commands_instance_id")
     private RegularCommandInstance regularCommandInstance;
 
 }

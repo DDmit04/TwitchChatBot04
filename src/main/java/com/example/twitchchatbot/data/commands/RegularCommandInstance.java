@@ -36,6 +36,6 @@ public class RegularCommandInstance {
     @OneToOne(mappedBy = "regularCommandInstance")
     private Channel channel;
 
-    @OneToMany(mappedBy = "regularCommandInstance", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "regularCommandInstance", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Command> commands = new ArrayList<>();
 }

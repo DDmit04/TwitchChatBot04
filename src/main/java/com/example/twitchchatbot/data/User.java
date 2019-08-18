@@ -37,7 +37,4 @@ public class User implements Serializable {
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime lastVisit;
 
-	@OneToMany(mappedBy = "channelUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-	private Set<Channel> channels = new HashSet<>();
-
 }
